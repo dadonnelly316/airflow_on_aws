@@ -1,0 +1,20 @@
+version: '3.1'
+
+
+services:
+  db:
+    image: postgres
+  environment: 
+    - POSTGRES_USER=airflow
+    - POSTGRES_PASSWORD=password
+    - APP_DB_USER=docker
+    - APP_DB_PASS=docker
+    - APP_DB_NAME=docker
+
+
+  airflow:
+    build: .
+    depends_on:
+      - db
+
+
