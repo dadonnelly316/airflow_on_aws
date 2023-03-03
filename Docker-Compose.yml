@@ -1,20 +1,80 @@
-version: '3.1'
+version: '3.7'
 
+# todo - variables - metadata_db container name in AIRFLOW__DATABASE__SQL_ALCHEMY_CONN/image name; postgres user/pw
+# todo - more graceful way to connect to db - networks? "links"?
+
+# x-airflow-base:
+#   &airflow-base
+#   build: .
+#   depends_on:
+#       db:
+#         condition: service_healthy
+#   environment:
+#     POSTGRES_USER: &POSTGRES_USER airflow_user
+#     POSTGRES_PASSWORD: &POSTGRES_PW password
+#     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+#     _AIRFLOW_DB_UPGRADE: 'true'
+  # - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN= &airflow_db_url !concat ['postgresql+psycopg2://', *POSTGRES_USER, ':', *POSTGRES_PW,'@localhost:5432/', *POSTGRES_USER ] 
 
 services:
-  db:
+  postgres:
     image: postgres
-  environment: 
-    - POSTGRES_USER=airflow
-    - POSTGRES_PASSWORD=password
-    - APP_DB_USER=docker
-    - APP_DB_PASS=docker
-    - APP_DB_NAME=docker
+    container_name: metadata_db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes: 
+      - host_machine_db:/var/lib/postgresql/data
+      - ./build/postgres_build:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready" ,"-U", "postgres"]
+      interval: 5s
+      retries: 5
 
-
-  airflow:
+  airflow-webserver:
+    #<<: *airflow-base    
+    container_name: airflow-webserver
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:password@postgres:5432/postgres
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - _AIRFLOW_DB_UPGRADE=true
+      - AIRFLOW__WEBSERVER__BASE_URL=http://localhost:8081
+      - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=8081
+      - AIRFLOW__CLI__API_CLIENT=http://localhost:8081
     build: .
     depends_on:
-      - db
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8081:8081
+    entrypoint: /bin/sh -c "/build/webserver_entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    #<<: *airflow-base
+    container_name: airflow-scheduler
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:password@postgres:5432/postgres
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - _AIRFLOW_DB_UPGRADE=true
+      - AIRFLOW__WEBSERVER__BASE_URL=http://localhost:8081
+      - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=8081
+      - AIRFLOW__CLI__API_CLIENT=http://localhost:8081
+    build: .
+    entrypoint: /bin/sh -c "/build/scheduler_entrypoint.sh"
+    depends_on:
+      postgres:
+        condition: service_healthy
+ 
+volumes: 
+  host_machine_db:
 
 
+  
