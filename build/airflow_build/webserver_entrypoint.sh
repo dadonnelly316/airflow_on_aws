@@ -20,7 +20,7 @@ airflow users create \
     --firstname david \
     --lastname donnelly \
     --role Admin \
-    --email david.donnelly1@ibm.com 
+    --email Daviddonnellydev@gmail.com
 
 echo "Database is ready to accept connections"
 airflow webserver --port 8081
