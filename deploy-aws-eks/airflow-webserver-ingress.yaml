@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airflow-webserver-ingress
+spec:
+  rules:
+  - host:
+    http:
+      paths:
+        - backend:
+          serviceName: airflow-webserver-service
+          servicePort: 8080

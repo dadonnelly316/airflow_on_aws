@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  labels:
+    app: airflow-webserver
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: airflow-webserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: airflow-webserver
+    spec:
+      containers:
+      - name: airflow-webserver
+        image: airflow-webserver:latest
+        ports:
+        - containerPort: 8080

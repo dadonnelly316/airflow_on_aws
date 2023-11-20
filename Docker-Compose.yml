@@ -28,7 +28,7 @@ services:
       - POSTGRES_DB=postgres
     volumes: 
       - host_machine_db:/var/lib/postgresql/data
-      - ./build/postgres_build:/docker-entrypoint-initdb.d
+      - ./build-dev-dependencies/postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "pg_isready" ,"-U", "postgres"]
       interval: 5s
