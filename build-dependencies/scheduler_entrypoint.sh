@@ -1,18 +1,17 @@
 #!/bin/sh
 
 
-is_db_ready () { 
-    airflow db check;
-    }
+# AIRFLOW DB CHECK COMMAND SETTINGS
+INPUT_MAX_RETRIES=120
+INPUT_RETRY_DELAY=1
+echo "Checking if the airflow db can be reached."
+bash airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 
 
-until is_db_ready; do
-    if [ $? -ne 0 ]; then
-        echo "database is not ready to accept connections"
-    fi
-done
 
-airflow db init
+echo "doing migrations in scheduler"
+airflow db migrations
+echo "Airflow db has been initialized."
 
-echo "Database is ready to accept connections"
+
 airflow scheduler

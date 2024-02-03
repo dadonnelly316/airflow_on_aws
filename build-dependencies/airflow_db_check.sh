@@ -4,7 +4,7 @@ INPUT_MAX_RETRIES=$1
 INPUT_RETRY_DELAY=$2
 
 if [ $# -ne 2 ] ; then 
-    echo "airflow_db_check.sh requires 3 arguments."
+    echo "airflow_db_check.sh requires 2 arguments."
 fi
 
 # checks if the database can be reached.

@@ -1,18 +1,17 @@
 #!/bin/sh
 
+# check if scheduler is available, then start webserver
+# i won't run any airflow db init/migrate options here, but i will run airflow db check
 
-is_db_ready () { 
-    airflow db check;
-    }
+INPUT_MAX_RETRIES=120
+INPUT_RETRY_DELAY=1
 
+sleep 1
 
-until is_db_ready; do
-    if [ $? -ne 0 ]; then
-        echo "database is not ready to accept connections"
-    fi
-done
+echo "checking migrations"
+airflow db check-migrations
+echo "migration check done"
 
-airflow db init
 
 airflow users create \
     --username admin \
@@ -23,4 +22,6 @@ airflow users create \
     --email Daviddonnellydev@gmail.com
 
 echo "Database is ready to accept connections"
-airflow webserver --port 8081
+
+
+airflow webserver --port 8080

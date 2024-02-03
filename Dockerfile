@@ -48,10 +48,12 @@ RUN chmod +x /build/install-airflow.sh && /build/install-airflow.sh
 # build stage name must be kept in synch with deploy-aws-eks/build-airflow-image.sh
 FROM airflow-init as airflow-webserver
 RUN chmod +x /build/webserver_entrypoint.sh
+ENTRYPOINT ["/build/webserver_entrypoint.sh"]
 
 # build stage name must be kept in synch with deploy-aws-eks/build-airflow-image.sh
 FROM airflow-init as airflow-scheduler
 RUN chmod +x /build/scheduler_entrypoint.sh
+ENTRYPOINT ["/build/scheduler_entrypoint.sh"]
 
 
 
