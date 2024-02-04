@@ -4,14 +4,15 @@
 # AIRFLOW DB CHECK COMMAND SETTINGS
 INPUT_MAX_RETRIES=120
 INPUT_RETRY_DELAY=1
-echo "Checking if the airflow db can be reached."
+echo "$(date): Checking if the airflow dadtabase can be reached."
 bash airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 
 
+if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
+    echo "$(date): Performing airflow database migrations."
+    airflow db migrations
+    echo "$(date): Airflow database migrations complete."
+fi
 
-echo "doing migrations in scheduler"
-airflow db migrations
-echo "Airflow db has been initialized."
-
-
+echo "$(date): Starting airflow scheduler."
 airflow scheduler

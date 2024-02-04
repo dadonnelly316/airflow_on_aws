@@ -24,7 +24,7 @@ class MySqlHook:
     def fetch_all(self, sql: str):
         pass
 
-    def fetch_batch(self,sql: str, batch_size: 5000):
+    def fetch_batch(self,sql: str, batch_size: int = 5000):
         pass
 
     def execute(self, sql: str):

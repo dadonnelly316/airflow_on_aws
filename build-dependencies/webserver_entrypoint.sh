@@ -1,27 +1,29 @@
 #!/bin/sh
 
-# check if scheduler is available, then start webserver
-# i won't run any airflow db init/migrate options here, but i will run airflow db check
-
+# AIRFLOW DB CHECK COMMAND SETTINGS
 INPUT_MAX_RETRIES=120
 INPUT_RETRY_DELAY=1
-
-sleep 1
-
-echo "checking migrations"
-airflow db check-migrations
-echo "migration check done"
+echo "$(date): Checking if the airflow dadtabase can be reached."
+bash airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 
 
-airflow users create \
-    --username admin \
-    --password password \
-    --firstname david \
-    --lastname donnelly \
-    --role Admin \
-    --email Daviddonnellydev@gmail.com
+if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
+    sleep 10
+    echo "$(date): Checking if migrations are complete."
+    airflow db check-migrations
+    echo "$(date): Database migrations are complete"
+fi
 
-echo "Database is ready to accept connections"
 
+if [[ $CREATE_WEBSERVER_USER_BOOLEAN=='1' ]]; then
+    echo "$(date): Creating admin user for webserver."
+    airflow users create \
+        --username ${AIRFLOW_WEBSERVER_USERNAME} \
+        --password ${AIRFLOW_WEBSERVER_PASSWORD}  \
+        --firstname admin \
+        --lastname admin \
+        --role Admin \
+        --email ${AIRFLOW_WEBSERVER_EMAIL}
+fi
 
 airflow webserver --port 8080
