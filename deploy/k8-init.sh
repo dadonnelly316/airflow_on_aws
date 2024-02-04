@@ -2,13 +2,13 @@
 
 
 kube_deploy() {
-    local FULL_FILE_PATH="$1"
+    local FILE_NAME="$1"
 
-    echo "$(date): Posting ${FULL_FILE_PATH} to the K8 API server."
-    kubectl apply -f $FULL_FILE_PATH
+    echo "$(date): Posting ${FILE_NAME} to the K8 API server."
+    kubectl apply -f "../k8-manifests/$FILE_NAME"
 }
 
-kube_deploy "../k8-manifests/init-namespace.yaml"
-kube_deploy "../k8-manifests/init-role.yaml"
-kube_deploy "../k8-manifests/init-service-account.yaml"
-kube_deploy "../k8-manifests/init-svc-role-binding.yaml" 
+kube_deploy "init-namespace.yaml"
+kube_deploy "init-role.yaml"
+kube_deploy "init-service-account.yaml"
+kube_deploy "init-svc-role-binding.yaml" 

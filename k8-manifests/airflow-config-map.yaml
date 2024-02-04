@@ -5,3 +5,4 @@ metadata:
 data:
   run_db_migration_boolean: "0" # 0=false, 1=true
   create_webserver_user_boolean: "0" # 0=false, 1=true
+  ingress_host: ""

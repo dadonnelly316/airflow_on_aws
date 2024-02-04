@@ -27,6 +27,11 @@ spec:
             configMapKeyRef:
               name: airflow-config
               key: run_db_migration_boolean
+        - name: AIRFLOW__WEBSERVER__BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: airflow-config
+              key: ingress_host
         - name: CREATE_WEBSERVER_USER_BOOLEAN
           valueFrom:
             configMapKeyRef:
