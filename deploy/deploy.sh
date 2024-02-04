@@ -1,9 +1,13 @@
 #!/bin/sh
 
-kubectl apply -f airflow-webserver-deployment.yaml
+kube_deploy() {
+    local FULL_FILE_PATH="$1"
 
-kubectl apply -f airflow-scheduler-eks.yaml
+    echo "$(date): Posting ${FULL_FILE_PATH} to the K8 API server."
+    kubectl apply -f $FULL_FILE_PATH
+}
 
-kubectl apply -f airflow-webserver-service.yaml
-
-kubectl apply -f airflow-webserver-ingress.yaml
+kube_deploy "../k8-manifests/airflow-scheduler-deployment.yaml"
+kube_deploy "../k8-manifests/airflow-webserver-deployment.yaml"
+kube_deploy "../k8-manifests/airflow-webserver-service.yaml"
+kube_deploy "../k8-manifests/airflow-webserver-ingress.yaml" 
