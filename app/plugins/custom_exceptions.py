@@ -12,3 +12,13 @@ class CannotInitializeHookException(Exception):
     def __init__(self,message="Unable to initalize a custom hook."):
         self.message=message
         super().__init__(self.message)
+
+
+
+class MsSqlHookException(Exception):
+    """
+    Raised when we are unable to initalize a custom hook.
+    """
+    def __init__(self,message="Unable to initalize a custom hook."):
+        self.message=message
+        super().__init__(self.message)
