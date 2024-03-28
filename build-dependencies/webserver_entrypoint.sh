@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # AIRFLOW DB CHECK COMMAND SETTINGS
 INPUT_MAX_RETRIES=120
@@ -9,6 +9,8 @@ bash airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 # todo - check if NEW scheduler deployment is ready
 # kubectl wait --for=condition=available deployment/airflow-scheduler
 
+
+
 if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
     sleep 30
     echo "$(date): Checking if migrations are complete."
@@ -17,6 +19,8 @@ if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
 fi
 
 
+
+echo ${CREATE_WEBSERVER_USER_BOOLEAN}
 if [[ $CREATE_WEBSERVER_USER_BOOLEAN=='1' ]]; then
     echo "$(date): Creating admin user for webserver."
     airflow users create \
@@ -28,4 +32,4 @@ if [[ $CREATE_WEBSERVER_USER_BOOLEAN=='1' ]]; then
         --email ${AIRFLOW_WEBSERVER_EMAIL}
 fi
 
-airflow webserver --port 8080
+airflow webserver --port 80

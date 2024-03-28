@@ -26,7 +26,7 @@ airflow_db_check() {
             return $EXIT_CODE
         else
             sleep $RETRY_DELAY
-            DB_CHECK_ATTEMPTS = $ (( DB_CHECK_ATTEMPTS + 1))
+            DB_CHECK_ATTEMPTS=$(($DB_CHECK_ATTEMPTS + 1))
             echo "airflow db check failed. Attempting retry $DB_CHECK_ATTEMPTS "
         fi
 
@@ -37,4 +37,6 @@ airflow_db_check() {
     return $EXIT_CODE
 }
 
+echo "INPUT_MAX_RETRIES=${INPUT_MAX_RETRIES}"
+echo "INPUT_MAX_RETRIES=${INPUT_RETRY_DELAY}"
 exit $(airflow_db_check $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY)
