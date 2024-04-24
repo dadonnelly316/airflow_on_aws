@@ -4,9 +4,13 @@ metadata:
   name: airflow-webserver-ingress
 spec:
   rules:
-  - host:
+  - host: localhost
     http:
       paths:
-        - backend:
-          serviceName: airflow-webserver-service
-          servicePort: 8080
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: airflow-webserver-service
+            port:
+              number: 80

@@ -3,14 +3,14 @@ FROM python:3.9-slim-bullseye as airflow-init
 RUN export AIRFLOW_UID=$(id -u)
 
 
-COPY app $HOME/app
+COPY app app
 
-RUN mkdir -p $HOME/app/{logs,dags,plugins}
-RUN chown -R "${AIRFLOW_UID}:0" $HOME/app/{logs,dags,plugins}
+RUN mkdir -p app/{logs,dags,plugins}
+RUN chown -R "${AIRFLOW_UID}:0" app/{logs,dags,plugins}
 
 # airflow home is where DAGs, Logs, and Plugins folder are located
-COPY build-dependencies $HOME/build/
-RUN export AIRFLOW_HOME=~$HOME/app
+COPY build-dependencies build
+RUN export AIRFLOW_HOME=~app
 
 
 
@@ -41,19 +41,17 @@ RUN apt-get install -y --no-install-recommends \
 
 #RUN pg_config --version
 
-RUN export $(cat $HOME/build/.env | xargs)
-RUN chmod +x /build/install-airflow.sh && /build/install-airflow.sh
+RUN export $(cat .env | xargs)
+RUN chmod +x build/install-airflow.sh && build/install-airflow.sh
 
 
-# build stage name must be kept in synch with deploy-aws-eks/build-airflow-image.sh
 FROM airflow-init as airflow-webserver
-RUN chmod +x /build/webserver_entrypoint.sh
-ENTRYPOINT ["/build/webserver_entrypoint.sh"]
+RUN chmod +x build/webserver_entrypoint.sh
+ENTRYPOINT ["build/webserver_entrypoint.sh"]
 
-# build stage name must be kept in synch with deploy-aws-eks/build-airflow-image.sh
 FROM airflow-init as airflow-scheduler
-RUN chmod +x /build/scheduler_entrypoint.sh
-ENTRYPOINT ["/build/scheduler_entrypoint.sh"]
+RUN chmod +x build/scheduler_entrypoint.sh
+ENTRYPOINT ["build/scheduler_entrypoint.sh"]
 
 
 

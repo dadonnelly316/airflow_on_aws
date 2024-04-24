@@ -4,7 +4,7 @@
 INPUT_MAX_RETRIES=120
 INPUT_RETRY_DELAY=1
 echo "$(date): Checking if the airflow database can be reached."
-bash airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
+bash ./build/airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 
 # todo - check if NEW scheduler deployment is ready
 # kubectl wait --for=condition=available deployment/airflow-scheduler
