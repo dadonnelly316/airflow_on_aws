@@ -10,4 +10,4 @@ echo installing airflow...
 # the below will be needed as of airflow 2.7.0
 # pip install "apache-airflow[cncf.kubernetes]==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
 pip install "apache-airflow[cncf.kubernetes]==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
-pip install --no-cache-dir -r /build/requirements.txt --constraint "${CONSTRAINT_URL}"
+pip install --no-cache-dir -r build/requirements.txt --constraint "${CONSTRAINT_URL}"
