@@ -1,0 +1,7 @@
+#!/bin/sh
+
+DUCKERHUB_USERNAME=${1}
+DOCKERHUB_PASSWORD=${2}
+
+
+docker login -u "${DUCKERHUB_USERNAME}" -p "${DOCKERHUB_PASSWORD}"
