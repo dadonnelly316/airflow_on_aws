@@ -21,7 +21,7 @@ fi
 
 
 echo ${CREATE_WEBSERVER_USER_BOOLEAN}
-if [[ $CREATE_WEBSERVER_USER_BOOLEAN=='1' ]]; then
+if [[ $CREATE_WEBSERVER_USER_BOOLEAN==1 ]]; then
     echo "$(date): Creating admin user for webserver."
     airflow users create \
         --username ${AIRFLOW_WEBSERVER_USERNAME} \

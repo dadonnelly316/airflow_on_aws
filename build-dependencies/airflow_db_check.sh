@@ -11,8 +11,8 @@ fi
 # this should be run prior to db init or db migrate
 
 airflow_db_check() {
-    local MAX_RETRIES="$1"
-    local RETRY_DELAY="$2"
+    local MAX_RETRIES=$1
+    local RETRY_DELAY=$2
 
     local DB_CHECK_ATTEMPTS=0
 

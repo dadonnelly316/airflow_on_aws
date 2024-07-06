@@ -1,11 +1,11 @@
-# bullseye is used since Airflow 2.8.0 was tested on tested on Ubuntu Bullseye LTS (see https://airflow.apache.org/docs/apache-airflow/2.8.0/installation/dependencies.html#system-dependencies)
-FROM python:3.9-slim-bullseye as airflow-init
+# Airflow 2.9.0 was tested on Debian bullseye and bookworm (see https://airflow.apache.org/docs/apache-airflow/2.9.0/installation/dependencies.html#debian-bookworm-12)
+FROM python:3.12-slim-bookworm as airflow-init
 
 COPY app app
 RUN mkdir -p app/{logs,dags,plugins}
 COPY build-dependencies build
 
-# Setting Airflow to the right user (https://airflow.apache.org/docs/apache-airflow/2.8.0/howto/docker-compose/index.html#setting-the-right-airflow-user)
+# Setting Airflow to the right user (https://airflow.apache.org/docs/apache-airflow/2.9.0/howto/docker-compose/index.html#setting-the-right-airflow-user)
 RUN export AIRFLOW_UID=$(id -u)
 RUN chown -R "${AIRFLOW_UID}:0" app/{logs,dags,plugins}
 
@@ -15,19 +15,31 @@ RUN export AIRFLOW_HOME=~app
 # ensures that the system is aware of the latest available package updates
 RUN apt-get update && apt-get upgrade -y
 
-# Airflow dependancies (hhttps://airflow.apache.org/docs/apache-airflow/2.8.0/installation/dependencies.html#system-dependencies)
+# Airflow dependancies (https://airflow.apache.org/docs/apache-airflow/2.9.0/installation/dependencies.html#debian-bookworm-12)
 RUN apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        apt-utils \
+        ca-certificates \
+        curl \
+        dumb-init \
         freetds-bin \
         krb5-user \
+        libgeos-dev \
         ldap-utils \
-        # libffi6 \
         libsasl2-2 \
         libsasl2-modules \
-        libssl1.1 \
-        locales  \
+        libxmlsec1 locales \
+        libffi8 \
+        libldap-2.5-0 \
+        libssl3 \
+        netcat-openbsd \
         lsb-release \
+        openssh-client \
+        python3-selinux \
+        rsync \
         sasl2-bin \
         sqlite3 \
+        sudo \
         unixodbc
 
 # psycopg2 dependancies are needed because postgres is used as the db backend - (https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary)
