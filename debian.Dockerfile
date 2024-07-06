@@ -39,10 +39,16 @@ RUN apt-get install -y --no-install-recommends \
         sqlite3 \
         unixodbc
 
+
 #RUN pg_config --version
 
 RUN export $(cat .env | xargs)
 RUN chmod +x build/install-airflow.sh && build/install-airflow.sh
+
+# ENV AIRFLOW__LOGGING__LOGGING_LEVEL="CRITICAL"
+# ENV AIRFLOW__LOGGING__FAB_LOGGING_LEVEL="CRITICAL"
+ENV AIRFLOW__LOGGING__BASE_LOG_FOLDER=""
+ENV AIRFLOW__CORE__LOAD_EXAMPLES=false
 
 
 FROM airflow-init as airflow-webserver

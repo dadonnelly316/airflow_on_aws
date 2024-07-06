@@ -9,6 +9,8 @@ docker build \
     --pull \
     --target airflow-webserver \
     --tag airflow-webserver \
+    --platform linux/amd64 \
+    --file ../debian.Dockerfile \
     ../
 
 
@@ -16,6 +18,8 @@ docker build \
     --pull \
     --target airflow-scheduler \
     --tag airflow-scheduler \
+    --platform linux/amd64 \
+    --file ../debian.Dockerfile \
     ../
 
 if [[ ! -z $REMOTE_IMAGE_REIGSTRY ]]; then

@@ -5,6 +5,7 @@ metadata:
 spec:
   selector:
     app: airflow-webserver
+  type: NodePort
   ports:
     - protocol: TCP
       port: 80

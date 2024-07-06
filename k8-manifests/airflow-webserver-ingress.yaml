@@ -3,14 +3,14 @@ kind: Ingress
 metadata:
   name: airflow-webserver-ingress
 spec:
+  ingressClassName: nginx
   rules:
-  - host: localhost
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: airflow-webserver-service
-            port:
-              number: 80
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: airflow-webserver-service
+              port:
+                number: 80
