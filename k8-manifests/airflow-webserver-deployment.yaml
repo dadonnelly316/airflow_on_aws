@@ -26,6 +26,8 @@ spec:
         - containerPort: 80
         serviceAccountName: airflow-svc
         env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: KubernetesExecutor
         - name: RUN_DB_MIGRATION_BOOLEAN
           valueFrom:
             configMapKeyRef:

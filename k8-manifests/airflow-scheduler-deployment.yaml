@@ -24,6 +24,8 @@ spec:
         imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
         serviceAccountName: airflow-svc
         env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: KubernetesExecutor
         - name: RUN_DB_MIGRATION_BOOLEAN
           valueFrom:
             configMapKeyRef:
