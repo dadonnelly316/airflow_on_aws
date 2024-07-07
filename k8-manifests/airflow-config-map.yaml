@@ -3,9 +3,9 @@ kind: ConfigMap
 metadata:
   name: airflow-config
 data:
-  run_db_migration_boolean: "1" # 0=false, 1=true
+  run_db_migration_boolean: "0" # 0=false, 1=true
   create_webserver_user_boolean: "0" # 0=false, 1=true
-  ingress_host: "http://localhost:80"
+  ingress_host: __INGRESS_HOST__
   airflow_webserver_web_server_port: "80"
-  airflow_cli_endpoint_url: "http://localhost:80"
+  airflow_cli_endpoint_url: __INGRESS_HOST__
 

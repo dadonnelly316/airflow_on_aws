@@ -10,7 +10,7 @@ bash ./build/airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 # kubectl wait --for=condition=available deployment/airflow-scheduler
 
 
-
+# we want to check if db migrations are complete before attempting to start webserver since it writes to the db
 if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
     sleep 30
     echo "$(date): Checking if migrations are complete."
@@ -19,7 +19,7 @@ if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
 fi
 
 
-
+# creating user for fab auth manager (https://airflow.apache.org/docs/apache-airflow-providers-fab/stable/auth-manager/webserver-authentication.html)
 echo ${CREATE_WEBSERVER_USER_BOOLEAN}
 if [[ $CREATE_WEBSERVER_USER_BOOLEAN==1 ]]; then
     echo "$(date): Creating admin user for webserver."
@@ -32,4 +32,5 @@ if [[ $CREATE_WEBSERVER_USER_BOOLEAN==1 ]]; then
         --email ${AIRFLOW_WEBSERVER_EMAIL}
 fi
 
+# starting webserver (https://airflow.apache.org/docs/apache-airflow/2.9.0/start.html)
 airflow webserver --port 80

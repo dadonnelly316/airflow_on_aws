@@ -56,17 +56,8 @@ RUN chmod +x build/install-airflow.sh && build/install-airflow.sh
 ENV AIRFLOW__LOGGING__BASE_LOG_FOLDER=""
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=false
 
-
-# Scheduler and Webserver share the same dependancies in the above stage, but branch off here since these components are initialized differently and therefore need diffent entrypoint scripts
-FROM airflow-init as airflow-webserver
-RUN chmod +x build/webserver_entrypoint.sh
-ENTRYPOINT ["build/webserver_entrypoint.sh"]
-
-FROM airflow-init as airflow-scheduler
-RUN chmod +x build/scheduler_entrypoint.sh
-ENTRYPOINT ["build/scheduler_entrypoint.sh"]
-
-
+# make entrypoint scripts executable
+RUN chmod +x build/scheduler_entrypoint.sh build/webserver_entrypoint.sh
 
 
 

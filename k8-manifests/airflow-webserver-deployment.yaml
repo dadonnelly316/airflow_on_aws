@@ -5,7 +5,7 @@ metadata:
   labels:
     app: airflow-webserver
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: airflow-webserver
@@ -18,8 +18,9 @@ spec:
     spec:
       containers:
       - name: airflow-webserver
-        image: airflow-webserver:latest
-        imagePullPolicy: Never
+        command: ['build/webserver_entrypoint.sh']
+        image: __AIRFLOW_WEBSERVER_IMAGE__  # sed will edit this for easy configuration between AWS EKS and minikube
+        imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
         ports:
         - containerPort: 80
         env:

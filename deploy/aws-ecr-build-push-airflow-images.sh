@@ -1,35 +1,20 @@
 #!/bin/sh
 
-REMOTE_IMAGE_REIGSTRY=${1}
-IMAGE_TAG=${2}
-
-# todo - allow to pass in other image tags to stage images for scanning before promoting to latest
+REMOTE_IMAGE_REIGSTRY=${1-""}
+IMAGE_TAG=${2-"latest"}
 
 docker build \
     --pull \
-    --target airflow-webserver \
-    --tag airflow-webserver \
+    --tag airflow \
     --platform linux/amd64 \
     --file ../debian.Dockerfile \
     ../
 
-
- docker build \
-    --pull \
-    --target airflow-scheduler \
-    --tag airflow-scheduler \
-    --platform linux/amd64 \
-    --file ../debian.Dockerfile \
-    ../
 
 if [[ ! -z $REMOTE_IMAGE_REIGSTRY ]]; then
 
     echo "$(date): Pushing images to container registry. This will fail if you're not signed into your container registry."
-
-    docker tag airflow-webserver "${REMOTE_IMAGE_REIGSTRY}/airflow-webserver:latest"
-    docker tag airflow-scheduler "${REMOTE_IMAGE_REIGSTRY}/airflow-scheduler:latest"
-
-    docker push "${REMOTE_IMAGE_REIGSTRY}/airflow-webserver:latest"
-    docker push "${REMOTE_IMAGE_REIGSTRY}/airflow-scheduler:latest"
+    docker tag airflow "${REMOTE_IMAGE_REIGSTRY}/airflow:${IMAGE_TAG}"
+    docker push "${REMOTE_IMAGE_REIGSTRY}/airflow:${IMAGE_TAG}"
 fi
 

@@ -1,3 +1,4 @@
 ecr-push.sh
 local-ecr-push.sh
 eks-testing.sh
+k8-manifests/_tmp/*

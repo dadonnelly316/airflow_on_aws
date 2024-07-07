@@ -18,8 +18,9 @@ spec:
     spec:
       containers:
       - name: airflow-scheduler
-        image: airflow-scheduler:latest
-        imagePullPolicy: Never
+        command: ['build/scheduler_entrypoint.sh']
+        image: airflow-scheduler:latest # sed will edit this for easy configuration between AWS EKS and minikube
+        imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
         env:
         - name: RUN_DB_MIGRATION_BOOLEAN
           valueFrom:
