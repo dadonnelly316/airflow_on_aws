@@ -40,8 +40,6 @@ services:
   airflow-webserver:
     <<: *airflow-base
     container_name: airflow-webserver
-    build:
-      dockerfile: debian.Dockerfile
     entrypoint: build/webserver_entrypoint.sh
     ports:
       - 80:80

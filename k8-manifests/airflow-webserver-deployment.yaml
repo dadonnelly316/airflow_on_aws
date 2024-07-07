@@ -19,10 +19,12 @@ spec:
       containers:
       - name: airflow-webserver
         command: ['build/webserver_entrypoint.sh']
-        image: __AIRFLOW_WEBSERVER_IMAGE__  # sed will edit this for easy configuration between AWS EKS and minikube
+        args: ['pod-template-file.yaml','__AIRFLOW_IMAGE__']
+        image: __AIRFLOW_IMAGE__  # sed will edit this for easy configuration between AWS EKS and minikube
         imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
         ports:
         - containerPort: 80
+        serviceAccountName: airflow-svc
         env:
         - name: RUN_DB_MIGRATION_BOOLEAN
           valueFrom:

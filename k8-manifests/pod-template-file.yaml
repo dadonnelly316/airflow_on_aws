@@ -1,0 +1,31 @@
+# pod templtae file documentation (https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html#example-pod-templates)
+# https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/configurations-ref.html
+# We are not mounting a volume to store task logs, so they will be lost after pod is destroyed. This is not ideal for production. (https://airflow.apache.org/docs/apache-airflow/2.1.0/executor/kubernetes.html#kubernetes-executor)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: placeholder-name
+spec:
+  containers:
+    - env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: LocalExecutor
+        # - name: AIRFLOW__CORE__FERNET_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: RELEASE-NAME-fernet-key
+        #       key: fernet-key
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: database-connection-string
+              key: database-connection-string
+      image: __AIRFLOW_IMAGE__ # sed will edit this for easy configuration between AWS EKS and minikube
+      imagePullPolicy: IfNotPresent
+      name: base
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 50000
+    fsGroup: 50000
+  serviceAccountName: airflow-svc

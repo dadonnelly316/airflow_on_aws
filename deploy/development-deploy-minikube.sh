@@ -34,7 +34,7 @@ kubectl delete secret database-connection-string airflow-webserver-username airf
 kubectl create secret generic "database-connection-string" --from-literal="database-connection-string"="${POSTGRES_CONN_STRING}" 
 kubectl create secret generic "airflow-webserver-username" --from-literal="airflow-webserver-username"="non-prod-testing" 
 kubectl create secret generic "airflow-webserver-password" --from-literal="airflow-webserver-password"="youshallpass" 
-kubectl create secret generic "airflow-webserver-email" --from-literal="airflow-webserver-email"="shrek@pgetoutofmyswamp.com" 
+kubectl create secret generic "airflow-webserver-email" --from-literal="airflow-webserver-email"="shrek@getoutofmyswamp.com" 
 kubectl create secret generic "airflow-webserver-secret-key" --from-literal="airflow-webserver-secret-key"="12345" 
 
 # we are taking K8 manifest files that are acting as "templates", copying them to a temp directory where it will be reference in kubectl apply, and using sed to configure manifest to work on minikube
@@ -45,12 +45,12 @@ cp ./{../k8-manifests/airflow-scheduler-deployment.yaml,../k8-manifests/airflow-
 sed -i '' 's,__INGRESS_HOST__,http://localhost:80,g' ../k8-manifests/_tmp/airflow-config-map.yaml
 
 # We must set image pull policy to never (see tip 1 https://minikube.sigs.k8s.io/docs/handbook/pushing/)
-sed -i '' 's/__IMAGE_PULL_POLICY__/Never/g' ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
+sed -i '' 's,__IMAGE_PULL_POLICY__,Never,g' ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
 sed -i '' 's/__IMAGE_PULL_POLICY__/Never/g' ../k8-manifests/_tmp/airflow-scheduler-deployment.yaml
 
 # find image in local docker repository
-sed -i '' 's/__AIRFLOW_WEBSERVER_IMAGE__/airflow-webserver:latest/g' ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
-sed -i '' 's/__AIRFLOW_SCHEDULER_IMAGE__/airflow-scheduler:latest/g' ../k8-manifests/_tmp/airflow-scheduler-deployment.yaml
+sed -i '' 's,__AIRFLOW_IMAGE__,airflow:latest,g' ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
+sed -i '' 's,__AIRFLOW_IMAGE__,airflow:latest,g' ../k8-manifests/_tmp/airflow-scheduler-deployment.yaml
 
 kubectl delete deployments --ignore-not-found=true airflow-scheduler airflow-webserver
 kube_deploy "_tmp/airflow-config-map.yaml"
