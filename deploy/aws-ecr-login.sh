@@ -1,5 +1,9 @@
 #!/bin/sh
 
+AWS_ACCOUNT=${1}
+AWS_REGION=${1}
 
 TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
-curl -i -H "Authorization: Basic $TOKEN" https://465579834180.dkr.ecr.us-east-1.amazonaws.com/v2/airflow/tags/list
+curl -i -H "Authorization: Basic $TOKEN" https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/v2/airflow/tags/list
+
+aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com
