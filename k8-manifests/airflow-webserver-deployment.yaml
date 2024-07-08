@@ -24,7 +24,6 @@ spec:
         imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
         ports:
         - containerPort: 80
-        serviceAccountName: airflow-svc
         env:
         - name: AIRFLOW__CORE__EXECUTOR
           value: KubernetesExecutor
