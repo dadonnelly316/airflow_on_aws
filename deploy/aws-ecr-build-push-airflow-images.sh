@@ -1,7 +1,7 @@
 #!/bin/sh
 
 REMOTE_IMAGE_REIGSTRY=${1-""}
-IMAGE_TAG=${2-"latest"}
+IMAGE_TAG=${2-"latest"} 
 
 docker build \
     --pull \

@@ -2,7 +2,8 @@
 
 POSTGRES_CONN_STRING=${1}
 
-cd "$(dirname "$0")"  
+# change pwd since this can be called from the parent directory
+cd "$(dirname "$0")"
 
 minikube start
 

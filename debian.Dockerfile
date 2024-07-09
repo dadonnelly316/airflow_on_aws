@@ -1,5 +1,5 @@
 # Airflow 2.9.0 was tested on Debian bullseye and bookworm (see https://airflow.apache.org/docs/apache-airflow/2.9.0/installation/dependencies.html#debian-bookworm-12)
-FROM python:3.12-slim-bookworm as airflow-init
+FROM python:3.12-slim-bookworm
 
 # used to set AIRFLOW__KUBERNETES_EXECUTOR__POD_TEMPLATE_FILE. We want this to be '' when running in docker-compose
 ARG K8_POD_TEMPLATE_INPUT=''
@@ -55,9 +55,10 @@ RUN apt-get install -y --no-install-recommends \
         gcc \
         python3-dev 
 
-RUN export $(cat .env | xargs)
+# install airflow and python dependancies
 RUN chmod +x build/install-airflow.sh && build/install-airflow.sh
 
+# RUN export $(cat .env | xargs)
 # ENV AIRFLOW__LOGGING__LOGGING_LEVEL="CRITICAL"
 # ENV AIRFLOW__LOGGING__FAB_LOGGING_LEVEL="CRITICAL"
 ENV AIRFLOW__LOGGING__BASE_LOG_FOLDER=""

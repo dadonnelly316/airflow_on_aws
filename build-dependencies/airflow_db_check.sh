@@ -7,9 +7,8 @@ if [ $# -ne 2 ] ; then
     echo "airflow_db_check.sh requires 2 arguments."
 fi
 
-# checks if the database can be reached.
-# this should be run prior to db init or db migrate
-
+# Checking if db can be reached. We do this to validate airflow can talk to database before attempting to perform migrations 
+# https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html#check
 airflow_db_check() {
     local MAX_RETRIES=$1
     local RETRY_DELAY=$2
