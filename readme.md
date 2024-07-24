@@ -4,7 +4,7 @@ A simple Apache Airflow deployment on Amazon _**Elastic Kubernetes Service**_ (_
 
 ## Description
 
-This repo contains Airflow's dependancies and utility scripts that can be used to deploy it on Amazon Web Services (AWS). This basic depoyment uses Python 3.12 on Debian as its base image, and Airflow is installed using PyPI (pip). This repo also comes with utility scripts that build Airflow's image and deploy it on AWS, which can be plugged into a CI/CD tool. 
+This repo contains Airflow's dependancies and utility scripts that can be used to deploy it on Amazon Web Services (AWS). This basic depoyment uses Python 3.12 on Debian as its base image, and Airflow is installed using PyPI (pip).
 
 ## Dependencies
 
@@ -55,9 +55,49 @@ First, you must navigate to the “Amazon Elastic Container Registry” service 
 
 ![Configuring a private AWS Elastic Container Registry named Airflow in AWS Console](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/ECR_step_1.png)
 
-## Authors
+### Provision AWS EKS Instance
 
-Contributors names and contact info
+[Apache Airflow is a Kubernetes friendly project](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/kubernetes.html). Because this is an AWS focused project, we use Amazon's Elastic Kubernetes Service is used as our container orchestration. This step will also involve provisioning an EC2 instance, which will be used as our Node Group.
 
-ex. David Donnelly  
-ex. Daviddonnellydev@gmail.com
+First, we navigate to the Elastic Kubernetes Service in the AWS console, and select "Create Cluster".
+
+![In the Amazon Elastic Kubernetes Service in the AWS Console, we select "Create Cluster"](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_1.png)
+
+You will be prompted to enter a name for your cluster, and select a cluster role. This project chooses "airflow", but you can use any name you prefer. Next, you must select "Create Role in IAM Console".
+
+![After selecting "Create Cluster" in the AWS EKS service in AWS, we give our cluster a name and select "Create Role in IAM Console".](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_2.png)
+
+You will be redirected to the IAM console where you will be prompted to create a new role. Keep all the defaults, and give your role a name.
+![Name EKS Cluster Role.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_3.png)
+
+Navigate back to the webpage where you were creating your EKS instance. Press the refresh button next to  
+![Select EKS Cluster Role.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_4.png)
+
+Keep the remaining defaults, and then navigate to the "Specify Networking" step for creating your EKS cluster. Select the VPC that was created along with your RDS database.
+![Specify Networking of EKS Cluster](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_5.png)
+
+Keep all other default values for the EKS cluster, and then select "Create Cluster". Once your EKS instance starts up you will then be required to create a Node Group by provisioning an EC2 instance. 
+
+Navigate to the "Compute" tab of your newly created cluster, and select "Add Node Group"
+![Add a Node Group to the EC2 Instance](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_6.png)
+
+Give your node group any name you prefer. This project used "airflow-node-group". Then, select "Create Role in IAM Console"
+![After selecting "Create Cluster" in the AWS EKS service in AWS, we give our cluster a name and select "Create Role in IAM Console".](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_7.png)
+
+You will be redirected to the IAM Console to create a Role for the Node Group. Keep all the defaults, and give your role any name
+![Giving the Node Group a name.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_8.png)
+
+You will be redirected back to the previous page where you will continue to configure your Node Group. Press the refresh button to populate the Node IAM role with the role you just created.
+![Creating an IAM role for the Node Group.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_9.png)
+
+Choose Amazon Linux 2 as our IAM type. Note that this is just the OS running in your EC2 instance. Your containers can contain any OS you prefer, which is Debian in our case.
+![Select Amazon Linux 2 as our EC2 OS.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_10.png)
+
+The final step to configuring our Node Group is to set the desired size to 1. You will want more nodes for a production enviorment, but 1 will suffice for testing purposes.
+![We create a single node for our Node Group.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_11.png)
+
+
+## Author
+
+Name: David Donnelly  
+Contact: Daviddonnellydev@gmail.com
