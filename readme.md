@@ -8,15 +8,15 @@ This project packages Airflow's dependancies into a Docker image that is capable
 
 This Airflow deployment ships with Python 3.12 and Apache Airflow 2.9.0. This version of Airflow was tested with Debian Bookworm, so it uses python:3.12-slim-bookworm as its base image. Airflow is installed directly using PyPI (pip), and its dependancies and startup scripts are manually installed and configured without the assistance of any services or modules specific to Airflow. This project references Airflow's documentation and contains helpful commentary so that one can understand how to deploy Airflow from scratch.
 
-This project uses Airflow's [Kubernetes Executor](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html), and is safe to perform ETL tasks inside of Airflow if your operators pull data into memory in reasonable-sized batches. It is a common sentiment that Airflow is an orchestration tool, and should only be used to trigger your ETL jobs, which are executed somewhere else. This is absolutely true for big data workloads that require distributed processing. Additionally, this is also true if your Airflow is deployed in a VM or a single node bare-metal server using the celery executor. By design, the Celery Executor doesn't isolate compute resources for distinct tasks that are running on a given worker, which can lead to OOM errors. The Kubernetes Executor will spin up a transient pod that's dedicated to an individual task run, and you're able to define memory limits to control resource usage on your cluster. If Airflow is being operated at an enterprise scale or if your tasks have dependency conflicts with Airflow, then you could store your DAG code inside of an image separate from airflow and then invoke it in your DAG using the KubernetesOperator. However, the end-effect is the same if your ETL is performed inside or outside of Airflow, so it's reasonable to perform your ETL directly inside of Airflow for use cases where your deployment is limited to a single team. You will just need to make sure that your operators commit data in small batches so that you're not pulling a full dataset into memory.
+This project uses Airflow's [Kubernetes Executor](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html), and is safe to perform non-distributed batch ETL tasks directly inside of Airflow if your operators fetch data into memory in reasonable-sized batches. It is a common sentiment that Airflow is an orchestration tool, and should only be used to trigger your ETL jobs that are executed somewhere else. This is absolutely true for big data workloads that require distributed processing. Additionally, this is also true if your Airflow is deployed on a VM or a single node server using the [Celery Executor](https://airflow.apache.org/docs/apache-airflow-providers-celery/stable/celery_executor.html). By design, the Celery Executor doesn't isolate compute resources for distinct tasks that are running on a given worker, which can lead to OOM errors. The Kubernetes Executor will spin up a transient pod that's dedicated to an individual task run, and you're able to define memory limits to control memory that pod starts with and can request on your cluster. If Airflow is being operated at an enterprise scale or if your tasks have dependency conflicts with Airflow, then you could store your DAG code inside of an image separate from airflow and then invoke it in your DAG using the KubernetesOperator. However, the end-effect is the same if your ETL is performed inside or outside of Airflow, so it's reasonable to perform your ETL directly inside of Airflow for use cases where your deployment is limited to a single team. You will just need to make sure that your operators commit data in small batches so that you're not pulling a full dataset into memory.
 
 ### Productionalizing Airflow
 
-This is not a production-ready deployment. This project does come with scripts that can be plugged into your CI/CD platform, but it's meant to run on a MacOS or Linux personal machine. A production deployment also needs robust build and unit testing, which isn't currently in the scope of this project. The logs will also need to be offloaded to external storage or an external logging service, which involves overwriting Airflow's default log handler. This project attempts to prevent Airflow from offloading the logs in EC2 by configuring base_log_folder (AIRFLOW__LOGGING__BASE_LOG_FOLDER) to an empty string, but this is was not well tested. 
+This is not a production-ready deployment. This project does come with scripts that that deploy Airflow to EKS, but these scripts are meant to be run on a MacOS or Linux personal machine rather than in a CI/CD tool. A production deployment also needs robust build and unit testing, which isn't currently in the scope of this project. The logs will also need to be offloaded to external storage or an external logging service, which involves overwriting Airflow's default log handler. This project attempts to prevent Airflow from storing the logs in EC2 by configuring base_log_folder (AIRFLOW__LOGGING__BASE_LOG_FOLDER) to an empty string, but this is was not well tested and therefore not guaranteed to work.
 
 Some additional considerations for a production deployment include configuring authentication for your Airflow Webserver. Airflow's webserver is built on top of [Flask App Builder (F.A.B.)](https://flask-appbuilder.readthedocs.io/en/latest/), which is a customizable web application scaffolding module. By default it stores your Airflow credentials in the database backend, but you're also able to override this default behavior in Airflow's [webserver_config.py](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#config-file) file so that you can [authenticate with SSO](https://flask-appbuilder.readthedocs.io/en/latest/security.html). 
 
-By default, Airflow will store secrets inside the postgres database, which can be decrypted by an attacker if they obtain your [fernet key](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html). A secure production environment should instead use a secure [secrets backend](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html).
+By default, Airflow will store secrets inside the database backend, which can be decrypted by an attacker if they obtain your [fernet key](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html). A secure production environment should instead use a secure [secrets backend](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html).
 
 If Airflow is being operated at an enterprise scale, then a robust deployment should also decouple the DAGs folder from the Airflow image. Typically, your DAGs are routinely updated relative to Airflow's other components. Moving your updated DAGs to production can be delayed if Airflow needs to build and deploy all of its components every time you want to update a DAG. Alternately, your [dags_folder](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#dags-folder) can be stored external to Airflow so that a new build isn't triggered every time a dag is updated.
 
@@ -26,23 +26,23 @@ If Airflow is being operated at an enterprise scale, then a robust deployment sh
 ## Dependencies
 
 *   MacOS or Linux host machine
-*   Docker Desktop (Docker-Compose is optional for local testing purposes).
-*   Minikube (optional for local testing purposes).
-*   AWS Command Line Interface (CLI).
-*   Kubernetes CLI (kubectl).
-*   Helm CLI (for installing the ingress controller).
+*   AWS Command Line Interface (cli)
+*   Kubernetes cli (kubectl)
+*   Helm cli (for installing the ingress controller).
+*   Docker Desktop (Docker-Compose is optional for local testing purposes)
+*   Minikube (optional for local testing purposes)
 
-## Required AWS Services
+## Required AWS Resources
 
-*   AWS Virtual Private Cloud (VPC) where all AWS services will be launched.
-*   AWS Elastic Kubernetes Service (EKS) with a EC2 Node Group on a linux/amd64 platform.
-*   AWS Relational Database Service (RDS) for PostgreSQL (12, 13, 14, 15, 16).
-*   AWS Elastic Container Registry (ECR) instance.
-*   AWS Elastic Compute Cloud (EC2) for EKS node group
+*   AWS Virtual Private Cloud (VPC) where all AWS services will be launched
+*   AWS Elastic Kubernetes Service (EKS)
+*   AWS Relational Database Service (RDS) for PostgreSQL (12, 13, 14, 15, 16)
+*   AWS Elastic Container Registry (ECR) instance
+*   AWS Elastic Compute Cloud (EC2) on linux/amd64 platform for the EKS node group
 
-## Configuring Amazon Web Services (AWS) Services
+## Configuring Amazon Web Services (AWS) Resources
 
-### Provision AWS RDS Instance
+### Provision an AWS RDS Instance
 
 Our first step is to provision an Amazon Relational Database Service (RDS) for PostgreSQL in your region of choice. This will serve as [Airflow's database backend](https://airflow.apache.org/docs/apache-airflow/stable/howto/set-up-database.html) where metadata will be stored, such as [user rules and DAG run history](https://www.astronomer.io/docs/learn/airflow-database). Note that Airflow also supports MySQL as a database backend, but this is not recommend because this project was tested using PostgreSQL.
 
@@ -54,7 +54,7 @@ Choose “Free Tier” in the templates section
 
 ![Configuring RDS instance from AWS Management Console to use free tier](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/RDS_step_2.png)
 
-In the settings section, we chose a database cluster identifier. This project chose “airflow”, but you can choose any name you prefer. We leave the default Master Username as PostgreSQL, and choose a strong password. If you prefer, you can let AWS manage your password.
+In the settings section, we chose a database cluster identifier. This project chose “airflow”, but you can choose any name you prefer. We leave the default Master Username as postgres, and choose a strong password. If you prefer, you can let AWS manage your password.
 
 ![Configuring RDS instance from AWS Management Console to to set cluster identifier, the PostgreSQL master username, and master password.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/RDS_step_3.jpg)
 
@@ -66,7 +66,7 @@ We create a new VPC, which will also be used by our EKS cluster and EC2 Node Gro
 
 Click "Create Database", and you're done!
 
-### Provision AWS ECR Instance
+### Provision an AWS ECR Instance
 
 Amazon Elastic Kubernetes Service needs a private image registry to pull images from when creating the Airflow Webserver and Scheduler deployments. We are going to provision an Amazon Elastic Container Registry (ECR) instance to store our Airflow images. This project currently relies on the user to locally build the airflow image and then push it to the private registry.
 
@@ -74,9 +74,9 @@ First, you must navigate to the “Amazon Elastic Container Registry” service 
 
 ![Configuring a private AWS Elastic Container Registry named Airflow in AWS Console](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/ECR_step_1.png)
 
-### Provision AWS EKS Instance
+### Provision an AWS EKS Instance
 
-[Apache Airflow is a Kubernetes friendly project](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/kubernetes.html). Because this is an AWS focused project, we use Amazon's Elastic Kubernetes Service is used as our container orchestration. This step will also involve provisioning an EC2 instance, which will be used as our Node Group.
+[Apache Airflow is a Kubernetes friendly project](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/kubernetes.html). Because this is an AWS focused project, we use Amazon's Elastic Kubernetes Service is used as our container orchestration platform. This step will also involve provisioning an EC2 instance, which will be used as our Node Group.
 
 First, we navigate to the Elastic Kubernetes Service in the AWS console, and select "Create Cluster".
 
@@ -148,7 +148,7 @@ Execute the below command from the project's home directory, and pass in the the
 
  Your Kubernetes cluster needs additional configuration so that an external client can reach the Airflow webserver from their web browser. An ingress is needed to expose the cluster to external clients, and a Service must be created to route clients from the ingress to the webserver. 
 
- This project comes with an Ingress and Service, but an Ingress Controller is also needed to act as a load balancer. We use the nginx ingress controller to for consistency with the Minikube testing environment.
+ This project comes with an Ingress and Service, but an Ingress Controller is also needed to act as a load balancer. We use the nginx ingress controller for consistency with the Minikube testing environment.
  
  After logging into the AWS CLI, run the below script from the project's home directory to login to your EKS cluster. Pass in the region where your cluster is deployed.
 
