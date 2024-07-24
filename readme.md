@@ -21,7 +21,7 @@ This repo contains Airflow's dependancies and utility scripts that can be used t
 *   AWS Elastic Container Registry (ECR) instance.
 *   AWS Elastic Compute Cloud (EC2) for EKS node group
 
-## Getting Started
+## Configuring Amazon Web Services (AWS) Services
 
 ### Provision AWS RDS Instance
 
@@ -96,6 +96,22 @@ Choose Amazon Linux 2 as our IAM type. Note that this is just the OS running in 
 The final step to configuring our Node Group is to set the desired size to 1. You will want more nodes for a production enviorment, but 1 will suffice for testing purposes.
 ![We create a single node for our Node Group.](https://github.com/dadonnelly316/airflow_on_aws/blob/main/documentation/images/EKS_step_11.png)
 
+
+## Deploying Airflow
+
+This repo comes with code to help deploy Airflow on AWS. This will involve building the Airflow image locally, and then pushing it to your Amazon Elastic Container Registry. Before creating the Webserver and Scheduler deployments, we will need to create some additional configurations for our cluster, create ConfigMaps and Secrets, and then we can post the deployment mainfest files to the API server.
+
+### Setting up the AWS CLI
+
+You need the AWS CLI to communicate and configure your AWS resources. Navigate to the home directory of this project in your terminal, and run the below script
+
+ ``` bash deploy/aws-cli-install-mac.sh  ```
+
+You will need an API key and secret so that you can authenticate through the AWS CLI. Create a user in the "IAM" service in the AWS console, and attach AmazonEKSClusterPolicy and PowerUserAccess policies to this user. After creating your user, you must select "Create Access Key". Take note of your API key and secret because they will be needed for subsequent steps. 
+
+Now you must execute the below command from the project's home directory. Pass in the API key and secret that were created in the previous step. You must also pass in the AWS region where you created your AWS resources.
+
+ ``` bash deploy/deploy/aws-cli-login.sh ${AWS_API_KEY} ${AWS_API_KEY} ${AWS_REGION} ```
 
 ## Author
 
