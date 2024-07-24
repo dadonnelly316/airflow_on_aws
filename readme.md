@@ -1,10 +1,27 @@
 ## Airflow on AWS
 
-A simple Apache Airflow deployment on Amazon _**Elastic Kubernetes Service**_ (_**EKS**_) with an **Elastic Compute Cloud (EC2)** node group  and a **Relational Database Service (RDS)** for PostgreSQL used as the database backend. 
+A simple Apache Airflow deployment on Amazon _**Elastic Kubernetes Service**_ (_**EKS**_) with an **Elastic Compute Cloud (EC2)** node group and a **Relational Database Service (RDS)** for PostgreSQL database backend. 
 
 ## Description
 
-This repo contains Airflow's dependancies and utility scripts that can be used to deploy it on Amazon Web Services (AWS). This basic depoyment uses Python 3.12 on Debian as its base image, and Airflow is installed using PyPI (pip).
+This project packages Airflow's dependancies into a Docker image that is capable of running inside of Kubernetes. This is an Amazon Web Services focused project, so it comes with additional scripts that facilitate the deployment of Airflow on Amazon Elastic Kubernetes Service. 
+
+This Airflow deployment ships with Python 3.12 and Apache Airflow 2.9.0. This version of Airflow was tested with Debian Bookworm, so it uses python:3.12-slim-bookworm as its base image. Airflow is installed directly using PyPI (pip), and its dependancies and startup scripts are manually installed and configured without the assistance of any services or modules specific to Airflow. This project references Airflow's documentation and contains helpful commentary so that one can understand how to deploy Airflow from scratch.
+
+This project uses Airflow's [Kubernetes Executor](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html), and is safe to perform ETL tasks inside of Airflow if your operators pull data into memory in reasonable-sized batches. It is a common sentiment that Airflow is an orchestration tool, and should only be used to trigger your ETL jobs, which are executed somewhere else. This is absolutely true for big data workloads that require distributed processing. Additionally, this is also true if your Airflow is deployed in a VM or a single node bare-metal server using the celery executor. By design, the Celery Executor doesn't isolate compute resources for distinct tasks that are running on a given worker, which can lead to OOM errors. The Kubernetes Executor will spin up a transient pod that's dedicated to an individual task run, and you're able to define memory limits to control resource usage on your cluster. If Airflow is being operated at an enterprise scale or if your tasks have dependancy conflicts with Airflow, then you could store your DAG code inside of an image separate from airflow and then invoke it in your DAG using the KubernetesOperator. However, the end-effect is the same if your ETL is performed inside or outside of Airflow, so it's reasonable to perform your ETL directly inside of Airflow for use cases where your deployment is limited to a single team. You will just need to make sure that your operators commit data in small batches so that you're not pulling a full dataset into memory.
+
+### Productionalizing Airflow
+
+This is not a production ready deployment. This project does come with scripts that can be plugged into your CI/CD platform, but it's meant to run on a MacOS or Linux personal machine. A production deployment also needs robust build and unit testing, which isn't currently in the scope of this project. The logs will also need to be offloaded to external storage or an external logging service, which involves overwriting Airflow's default log handler. This project attempts to prevent Airflow from offloading the logs in EC2 by configuring base_log_folder (AIRFLOW__LOGGING__BASE_LOG_FOLDER) to an empty string, but this is was not well tested. 
+
+Some additional considerations for a production deployment include configuring authentication for your Airflow webserver. Airflow's webserver is built on top of [Flask App Builder (F.A.B.)](https://flask-appbuilder.readthedocs.io/en/latest/), which is a customizable web application scafolding module. By default it stores your Airflow credentails in the database backend, but you're also able to override this default behavior in Airflow's (webserver_config.py)[https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#config-file] file so that you can [authenticate with SSO](https://flask-appbuilder.readthedocs.io/en/latest/security.html). 
+
+By default, Airflow will store secrets inside the postgres database, which can be decrypted by an attacker if they obtain your [fernet key](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html). A secure production environment should instead use a secure (secrets backend)[https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html].
+
+If Airflow is being operated at an enterprise scale, then a robust deployment should also decouple the DAGs folder from the Airflow image. Typically, your DAGs are routinly updated relative to Airflow's other components. Moving your updated DAGs to production can be delayed if Airflow needs to build and deploy all of its components every time you want to update a DAG. Alternatly, your [dags_folder](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#dags-folder) can be stored external to Airflow so that a new build isn't triggered every time a dag is updated.
+
+
+
 
 ## Dependencies
 
@@ -111,7 +128,19 @@ You will need an API key and secret so that you can authenticate through the AWS
 
 Now you must execute the below command from the project's home directory. Pass in the API key and secret that were created in the previous step. You must also pass in the AWS region where you created your AWS resources.
 
- ``` bash deploy/deploy/aws-cli-login.sh ${AWS_API_KEY} ${AWS_API_KEY} ${AWS_REGION} ```
+ ``` bash deploy/aws-cli-login.sh ${AWS_API_KEY} ${AWS_API_KEY} ${AWS_REGION} ```
+
+### Build and Push Images to ECR
+
+You cannot yet interact with your image registry even though you're authenticated to AWS through the CLI. Run the below command from the project's home directory, and pass in your AWS account ID (found in the AWS console) and the AWS region where your resources were provisioned. 
+
+ ``` bash deploy/aws-ecr-login.sh ${AWS_ACCOUNT} ${AWS_REGION} ```
+
+Execute the below command from the project's home directory, and pass in the the image registry URL without the repository name (the project assumes that the repository is named airflow). If you don't know this, navigate to Amazon Elastic Container Registry in the AWS Console, select the airflow registry, and check the URI field. Don't include '/airflow' at the end of the URI.
+
+ ``` bash deploy/aws-ecr-build-push-airflow-images ${REMOTE_IMAGE_REIGSTRY} ```
+
+ You now built your Airflow image and pushed it to your private registry. Note that this one image is used for both the scheduler and the webserver, but the deployment manifest files for the webserver and scheduler have different entrypoint scripts that run different tasks to start their respective components correctly.
 
 ## Author
 
