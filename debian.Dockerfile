@@ -50,7 +50,7 @@ RUN apt-get install -y --no-install-recommends \
         unixodbc
 
 # psycopg2 dependancies are needed because postgres is used as the db backend - (https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary)
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get install --upgrade -y --no-install-recommends \
         libpq-dev \
         gcc \
         python3-dev 
