@@ -1,12 +1,13 @@
 from airflow.models import BaseOperator
 from queue import Queue
 from typing import Tuple, List, Any
-
 import threading
+import time
 from queue import Queue
 from aurora_hook import AwsAuroraHook
 
 SENTINEL = object()
+MAX_QUEUE_SIZE = 30000
 
 # todo: logging and error handling
 
@@ -64,6 +65,7 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         batch_fetch_size: int = 10000,
         batch_commit_size: int = 1000,
         upsert_worker_count: int = 3,
+        add_loadtime: bool = True,
         *args,
         **kwargs,
     ):
@@ -76,9 +78,11 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         self.batch_fetch_size = batch_fetch_size
         self.batch_commit_size = batch_commit_size
         self.upsert_worker_count = upsert_worker_count
+        self.add_loadtime=add_loadtime
 
     def _build_upsert_sql(self):
         # here is where i'll build upsert SQL and validate the order of the columns in the fetch using cursor
+        # need to check add_loadtime param. also throw error if LOADTIME is in cursor fetch since it's reserved
         raise NotImplementedError
 
     def _cleanup_workers(self, w: threading.Thread):
@@ -111,6 +115,11 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
                 w.start()
 
             while True:
+                
+                while q.qsize() > MAX_QUEUE_SIZE:
+                    # todo: add logging to say we're waiting for the workers to catch up
+                    time.sleep(5)
+                    
                 batch = src_hook.fetch_batch(read_cursor, self.batch_fetch_size)
                 if not batch:
                     break
