@@ -129,4 +129,5 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
                 
             src_hook.close(src_conn, read_cursor)
             if all_workers_closed is False:
+                # todo: logging/error handling
                 raise

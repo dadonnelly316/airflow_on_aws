@@ -3,6 +3,7 @@ from aws_advanced_python_wrapper import AwsWrapperConnection
 from airflow.models import Connection
 from typing import List, Optional, Tuple, Any
 from psycopg2.extensions import cursor as PsycopgCursor
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 # https://github.com/aws/aws-advanced-python-wrapper
@@ -20,6 +21,7 @@ class AwsAuroraHook(BaseHook):
         conn = self.get_connection(self.aurora_conn_id)
         return conn
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def connect(self) -> AwsWrapperConnection:
         aurora_conn = self.get_conn()
         conn = AwsWrapperConnection.connect(
@@ -33,14 +35,18 @@ class AwsAuroraHook(BaseHook):
 
         return conn
 
+
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def fetch_batch(self, cursor: PsycopgCursor, batch_size: int = 5000) -> List[Tuple]:
         try:
             batch = cursor.fetchmany(size=batch_size)
             return batch
         except:
             cursor.close()
+            # todo: logging/error handling
             raise
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def execute_read(
         self,
         conn: AwsWrapperConnection,
@@ -52,8 +58,10 @@ class AwsAuroraHook(BaseHook):
             return cursor
         except:
             cursor.close()
+            # todo: logging/error handling
             raise
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def execute_write(
         self,
         cursor: PsycopgCursor,
@@ -65,14 +73,18 @@ class AwsAuroraHook(BaseHook):
             return cursor.rowcount
         except:
             cursor.close()
+            # todo: logging/error handling
             raise
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def get_cursor(conn: AwsWrapperConnection) -> PsycopgCursor:
         return conn.cursor()
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def get_column_mapping(cursor: PsycopgCursor) -> Tuple:
         return tuple(desc[0] for desc in cursor.description)
 
+    @retry(stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10))
     def close(
         self, conn: AwsWrapperConnection, cursor: Optional[PsycopgCursor] = None
     ) -> None:
