@@ -7,7 +7,7 @@ ARG AIRFLOW_IMAGE_NAME_INPUT='airflow:latest'
 
 COPY app app
 RUN mkdir -p app/{logs,dags,plugins}
-COPY build-dependencies build
+COPY build-dependencies /build
 COPY k8-manifests/pod-template-file.yaml /
 # keep this in docker-compose so you can easily use cat command to validate input. K8_POD_TEMPLATE_INPUT will never be passed in docker-compose, so pod template isn't used outside of k8.
 RUN sed -i "s,__AIRFLOW_IMAGE__,${AIRFLOW_IMAGE_NAME_INPUT},g" /pod-template-file.yaml
@@ -66,7 +66,7 @@ ENV AIRFLOW__CORE__LOAD_EXAMPLES=false
 ENV AIRFLOW__KUBERNETES_EXECUTOR__POD_TEMPLATE_FILE=$K8_POD_TEMPLATE_INPUT
 
 # make entrypoint scripts executable
-RUN chmod +x build/scheduler_entrypoint.sh build/webserver_entrypoint.sh
+RUN chmod +x /build/scheduler_entrypoint.sh /build/webserver_entrypoint.sh
 
 
 

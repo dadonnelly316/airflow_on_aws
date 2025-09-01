@@ -8,13 +8,14 @@
                 "ms-python.python",
 			],
             "settings": {
-                "python.defaultInterpreterPath": "/usr/local/bin/python"
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
             }
 		}
 	},
 	"build": {
         // Path is relative to the devcontainer.json file.
-        "dockerfile": "../debian.Dockerfile"
+        "dockerfile": "../debian.Dockerfile",
+		"context": ".."
     },
 	"postCreateCommand": "bash ./.devcontainer/postCreateScript.sh"
 

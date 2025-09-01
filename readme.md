@@ -14,7 +14,7 @@ This project packages Airflow's dependencies into a Docker image that is capable
 
 
 
-This Airflow deployment ships with Python 3.12 and Apache Airflow 2.9.0. This version of Airflow was tested with Debian Bookworm, so it uses python:3.12-slim-bookworm as its base image. Airflow is installed directly using PyPI (pip), and its dependencies and startup scripts are manually installed and configured without the assistance of any services or modules specific to Airflow. This project references Airflow's documentation and contains helpful commentary so that one can understand how to deploy Airflow from scratch.
+This Airflow deployment ships with Python 3.12 and Apache Airflow 2.11.0. This version of Airflow was tested with Debian Bookworm, so it uses python:3.12-slim-bookworm as its base image. Airflow is installed directly using PyPI (pip), and its dependencies and startup scripts are manually installed and configured without the assistance of any services or modules specific to Airflow. This project references Airflow's documentation and contains helpful commentary so that one can understand how to deploy Airflow from scratch.
 
 
 
