@@ -18,6 +18,8 @@ x-airflow-base: &airflow-base
     - AIRFLOW__CLI__API_CLIENT=http://localhost:80
     - AIRFLOW_WEBSERVER_USERNAME=non-prod-testing
     - AIRFLOW_WEBSERVER_PASSWORD=youshallpass
+    - AIRFLOW__WEBSERVER__SECRET_KEY=12345
+    - AIRFLOW__CORE__FERNET_KEY="wYyVYazg3rC5Zp6Hn2bCKc7J0lw3iDeY0N1lgYctH7E="
 
 services:
   postgres:

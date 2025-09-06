@@ -1,7 +1,4 @@
 psycopg2
 boto3
 tenacity
-
-# aurora dependancies
 aws-advanced-python-wrapper
-psycopg
