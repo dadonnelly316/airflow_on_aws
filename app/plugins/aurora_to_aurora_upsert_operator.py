@@ -7,7 +7,6 @@ from queue import Queue
 from aurora_hook import AwsAuroraHook
 
 SENTINEL = object()
-MAX_QUEUE_SIZE = 500
 
 # todo: logging and error handling
 # todo: fix type annotation for tules
@@ -22,38 +21,27 @@ class AuroraUpsertWorker(threading.Thread):
         queue: Queue[Tuple],
         db_hook: AwsAuroraHook,
         upsert_sql: str,
-        batch_commit_size: int,
         num_cols: int,
     ):
         super().__init__()
         self.queue = queue
         self.db_hook = db_hook
         self.upsert_sql = upsert_sql
-        self.batch_commit_size = batch_commit_size
         self.num_cols = num_cols
 
     # note: this is hanging when we get write errors. Specifically with cursor already closed error. also handle it to exit right away. Figure out why
     def run(self):
         conn = self.db_hook.connect()
         cursor = None
-        batch: List[Tuple[Any, ...]] = []
 
         try:
             cursor = self.db_hook.get_cursor(conn)
             while True:
-                item = self.queue.get()
+                batch = self.queue.get()
                 try:
-                    if item is SENTINEL:
-                        if batch:
-                            self.db_hook.execute_write(cursor, self.upsert_sql, batch)
+                    if batch is SENTINEL:
                         break
-
-                    batch.append(item)
-
-                    batch_size = len(batch)
-                    if batch_size >= self.batch_commit_size:
-                        self.db_hook.execute_write(cursor, self.upsert_sql, batch)
-                        batch.clear()
+                    self.db_hook.execute_write(cursor, self.upsert_sql, batch)
                 finally:
                     self.queue.task_done()
         except:
@@ -73,9 +61,8 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         source_sql: str,
         upsert_key: List[str],
         batch_fetch_size: int = 10000,
-        batch_commit_size: int = 1000,
+        buffer_size: int = 10,
         upsert_worker_count: int = 3,
-        max_queue_size: int = MAX_QUEUE_SIZE,
         add_loadtime: bool = True,
         *args,
         **kwargs,
@@ -88,9 +75,8 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         self.source_sql = source_sql
         self.upsert_key = upsert_key
         self.batch_fetch_size = batch_fetch_size
-        self.batch_commit_size = batch_commit_size
+        self.buffer_size = buffer_size
         self.upsert_worker_count = upsert_worker_count
-        self.max_queue_size = max_queue_size
         self.add_loadtime = add_loadtime
 
     def _build_upsert_sql(self, column_mappings: Tuple) -> str:
@@ -137,7 +123,6 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
                     queue=q,
                     db_hook=dest_hook,
                     upsert_sql=upsert_sql,
-                    batch_commit_size=self.batch_commit_size,
                     num_cols=len(column_mappings),
                 )
                 for _ in range(self.upsert_worker_count)
@@ -148,17 +133,15 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
 
             while True:
 
-                while q.qsize() > self.max_queue_size:
+                while q.qsize() > self.buffer_size:
                     # todo: add logging to say we're waiting for the workers to catch up
-                    time.sleep(5)
+                    time.sleep(1)
 
                 batch = src_hook.fetch_batch(read_cursor, self.batch_fetch_size)
                 if not batch:
                     break
 
-                # note: this is O(n).. do i really need this? can maybe I should just put the batches in the Queue and write
-                for row in batch:
-                    q.put(row)
+                q.put(batch)
 
             for _ in workers:
                 q.put(SENTINEL)

@@ -18,10 +18,8 @@ with DAG(
         source_sql="SELECT ID, DESCR FROM PUBLIC.TEST",
         upsert_key=["ID"],
         batch_fetch_size=100,
-        batch_commit_size=25,
         upsert_worker_count=3,
-        max_queue_size=500,
-        # batch_buffer_size = ???
+        buffer_size=15 
     )
     
     aurora_upsert
