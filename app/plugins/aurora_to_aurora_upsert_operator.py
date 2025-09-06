@@ -3,7 +3,7 @@ from queue import Queue
 from typing import Tuple, List, Any
 import threading
 import time
-from queue import Queue, Empty
+from queue import Queue
 from aurora_hook import AwsAuroraHook
 
 SENTINEL = object()
@@ -14,6 +14,7 @@ MAX_QUEUE_SIZE = 500
 # todo: need to allow queue to exit when i hit a write exception. otherwise it will hang
 # need a more efficient way to fetch batches and flatten without using O(n) operations. For example, i flatten batches in reader. Then i loop through and flatten rows in worker
 
+# todo: use var named uncommited_batchs_buffer
 class AuroraUpsertWorker(threading.Thread):
 
     def __init__(
@@ -44,23 +45,14 @@ class AuroraUpsertWorker(threading.Thread):
                 try:
                     if item is SENTINEL:
                         if batch:
-                            batch_size = len(batch)
-                            upsert_sql = self.upsert_sql.format(
-                                placeholders=self._get_placeholders(batch_size)
-                            )
-                            flat_params = [val for row in batch for val in row]
-                            self.db_hook.execute_write(cursor, upsert_sql, flat_params)
+                            self.db_hook.execute_write(cursor, self.upsert_sql, batch)
                         break
 
                     batch.append(item)
 
                     batch_size = len(batch)
                     if batch_size >= self.batch_commit_size:
-                        upsert_sql = self.upsert_sql.format(
-                            placeholders=self._get_placeholders(batch_size)
-                        )
-                        flat_params = [val for row in batch for val in row]
-                        self.db_hook.execute_write(cursor, upsert_sql, flat_params)
+                        self.db_hook.execute_write(cursor, self.upsert_sql, batch)
                         batch.clear()
                 finally:
                     self.queue.task_done()
@@ -69,11 +61,6 @@ class AuroraUpsertWorker(threading.Thread):
 
         finally:
             self.db_hook.close(conn, cursor)
-
-    def _get_placeholders(self, batch_size: int) -> str:
-        single_row = "(" + ", ".join(["%s"] * self.num_cols) + ")"
-        placeholders = ", ".join([single_row] * batch_size)
-        return placeholders
 
 
 class AuroraToAuroraUpsertOperator(BaseOperator):
@@ -112,7 +99,7 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
 
         sql = f"""
             MERGE INTO {self.target_table} AS tgt
-            USING (VALUES {{placeholders}}) AS src ({','.join(column_mappings)})
+            USING (VALUES %s ) AS src ({','.join(column_mappings)})
                 ON {' AND '.join([f'tgt.{col} = src.{col}' for col in self.upsert_key])}
             WHEN MATCHED THEN
                 UPDATE SET

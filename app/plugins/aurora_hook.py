@@ -2,6 +2,7 @@ from airflow.hooks.base import BaseHook
 from airflow.models import Connection
 from typing import List, Optional, Tuple, Any
 from psycopg2.extensions import cursor as PsycopgCursor, connection
+from psycopg2.extras import execute_values
 from tenacity import retry, stop_after_attempt, wait_exponential
 import psycopg2
 
@@ -90,10 +91,9 @@ class AwsAuroraHook(BaseHook):
         cursor: PsycopgCursor,
         sql: str,
         params: List[Tuple[Any, ...]],
-    ) -> int:
+    ) -> None:
         try:
-            cursor.execute(sql, params)
-            return cursor.rowcount
+            execute_values(cursor, sql, params)
         except Exception as e:
             print(e)
             cursor.close()
