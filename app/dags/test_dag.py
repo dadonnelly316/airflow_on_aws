@@ -19,7 +19,9 @@ with DAG(
         upsert_key=["ID"],
         batch_fetch_size=100,
         upsert_worker_count=3,
-        buffer_size=15 
+        buffer_size=15,
+        created_timestamp=False,
+        updated_timestamp=False
     )
     
     aurora_upsert

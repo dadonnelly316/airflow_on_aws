@@ -1,10 +1,11 @@
 from airflow.models import BaseOperator
 from queue import Queue
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Union
 import threading
 import time
 from queue import Queue
 from aurora_hook import AwsAuroraHook
+from datetime import datetime, timezone
 
 SENTINEL = object()
 
@@ -21,13 +22,11 @@ class AuroraUpsertWorker(threading.Thread):
         queue: Queue[Tuple],
         db_hook: AwsAuroraHook,
         upsert_sql: str,
-        num_cols: int,
     ):
         super().__init__()
         self.queue = queue
         self.db_hook = db_hook
         self.upsert_sql = upsert_sql
-        self.num_cols = num_cols
 
     # note: this is hanging when we get write errors. Specifically with cursor already closed error. also handle it to exit right away. Figure out why
     def run(self):
@@ -63,7 +62,8 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         batch_fetch_size: int = 10000,
         buffer_size: int = 10,
         upsert_worker_count: int = 3,
-        add_loadtime: bool = True,
+        updated_timestamp: bool = False,
+        created_timestamp: bool = False,
         *args,
         **kwargs,
     ):
@@ -77,11 +77,60 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         self.batch_fetch_size = batch_fetch_size
         self.buffer_size = buffer_size
         self.upsert_worker_count = upsert_worker_count
-        self.add_loadtime = add_loadtime
+        self.updated_timestamp = updated_timestamp
+        self.created_timestamp = created_timestamp
+        
+        self.reserved_columns = ["UPDATED_TIMESTAMP",'CREATED_TIMESTAMP']
+        
+    # I'm going to set ts directly in merge to not waste read I/O by including in select
+    # Also, i don't want to add it in params because looping through to add there is an extra O(n) operation
+    def __check_ts_sql_injection(self, timestamp: datetime):
+        
+        if not isinstance(timestamp, datetime):
+            raise Exception("SQL injection detected")
+        
+        if timestamp.year < 1 or timestamp.year > 9999:
+            raise Exception("SQL injection dectected")
+        
+        return f"'{timestamp.isoformat()}'"
+    
+
+    def __validate_columns(self, target_table: str, src_query_cols: list[str], dest_hook: AwsAuroraHook) -> List[str]:
+        err_msgs = []
+        conn = dest_hook.connect()
+
+        try:
+            with dest_hook.get_cursor(conn) as cursor:
+                cursor.execute("SELECT UPPER(COLUMN_NAME) AS COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE UPPER(TABLE_SCHEMA) || '.' || UPPER(TABLE_NAME) = %s", (target_table.upper(),))
+                tgt_tbl_cols = {row[0] for row in cursor.fetchall()}
+        finally:
+            dest_hook.close(conn)
+        
+        print(tgt_tbl_cols)
+        invalid_columns = [col for col in src_query_cols if col not in tgt_tbl_cols]
+        if invalid_columns:
+            err_msgs.append(f"Invalid column names {','.join(invalid_columns)} is not valid in {target_table}. Valid options are {','.join(tgt_tbl_cols)}")
+            print(tgt_tbl_cols)
+        
+        reserved_columns = [col for col in src_query_cols if col in self.reserved_columns]
+        if reserved_columns:
+            err_msgs.append(f"Reserved column names {','.join(self.reserved_columns)} cannot be present in the source query")
+        
+        if self.created_timestamp and "CREATED_TIMESTAMP" not in tgt_tbl_cols:
+            err_msgs.append(f"task set created_timestamp to True, but CREATED_TIMESTAMP column is not present in {target_table}")
+            
+        if self.updated_timestamp and "UPDATED_TIMESTAMP" not in tgt_tbl_cols:
+            err_msgs.append(f"task set updated_timestamp to True, but UPDATED_TIMESTAMP column is not present in {target_table}")
+            
+        return err_msgs
+ 
 
     def _build_upsert_sql(self, column_mappings: Tuple) -> str:
         # here is where i'll build upsert SQL and validate the order of the columns in the fetch using cursor
         # need to check add_loadtime param. also throw error if LOADTIME is in cursor fetch since it's reserved
+        # make sure src cols are inside the target table
+        
+        # utc_now = datetime.now(timezone.utc)
 
         sql = f"""
             MERGE INTO {self.target_table} AS tgt
@@ -111,10 +160,18 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         read_cursor = None
         src_conn = src_hook.connect()
         workers = []
+        
 
         try:
             read_cursor = src_hook.execute_read(src_conn, self.source_sql)
+            
             column_mappings = src_hook.get_column_mapping(read_cursor)
+            err_msgs = self.__validate_columns(target_table=self.target_table, src_query_cols=column_mappings, dest_hook=dest_hook)
+            
+            if err_msgs:
+                raise Exception("\n".join(err_msgs))
+            
+            
             upsert_sql = self._build_upsert_sql(column_mappings)
 
             q = Queue()
@@ -123,7 +180,6 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
                     queue=q,
                     db_hook=dest_hook,
                     upsert_sql=upsert_sql,
-                    num_cols=len(column_mappings),
                 )
                 for _ in range(self.upsert_worker_count)
             ]

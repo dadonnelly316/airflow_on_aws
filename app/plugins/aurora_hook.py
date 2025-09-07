@@ -110,7 +110,7 @@ class AwsAuroraHook(BaseHook):
         stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10)
     )
     def get_column_mapping(self, cursor: PsycopgCursor) -> Tuple:
-        return tuple(desc[0] for desc in cursor.description)
+        return tuple(desc[0].upper() for desc in cursor.description)
 
     @retry(
         stop=(stop_after_attempt(5)), wait=wait_exponential(multiplier=2, min=4, max=10)
