@@ -106,11 +106,9 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
         finally:
             dest_hook.close(conn)
         
-        print(tgt_tbl_cols)
         invalid_columns = [col for col in src_query_cols if col not in tgt_tbl_cols]
         if invalid_columns:
             err_msgs.append(f"Invalid column names {','.join(invalid_columns)} is not valid in {target_table}. Valid options are {','.join(tgt_tbl_cols)}")
-            print(tgt_tbl_cols)
         
         reserved_columns = [col for col in src_query_cols if col in self.reserved_columns]
         if reserved_columns:
@@ -126,11 +124,19 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
  
 
     def _build_upsert_sql(self, column_mappings: Tuple) -> str:
-        # here is where i'll build upsert SQL and validate the order of the columns in the fetch using cursor
-        # need to check add_loadtime param. also throw error if LOADTIME is in cursor fetch since it's reserved
-        # make sure src cols are inside the target table
         
-        # utc_now = datetime.now(timezone.utc)
+        utc_now = datetime.now(timezone.utc)
+        updated_ts = f",UPDATED_TIMESTAMP = {self.__check_ts_sql_injection(utc_now)}" if self.updated_timestamp else ""
+        
+        if self.created_timestamp:
+            created_ts = f",CREATED_TIMESTAMP = {self.__check_ts_sql_injection(utc_now)}"
+        elif self.created_timestamp is False and self.updated_timestamp is True:
+            created_ts= ",UPDATED_TIMESTAMP = {self.__check_ts_sql_injection(utc_now)}" if self.updated_timestamp else ""
+        else:
+           created_ts= ""
+        
+        
+        
 
         sql = f"""
             MERGE INTO {self.target_table} AS tgt
@@ -138,7 +144,7 @@ class AuroraToAuroraUpsertOperator(BaseOperator):
                 ON {' AND '.join([f'tgt.{col} = src.{col}' for col in self.upsert_key])}
             WHEN MATCHED THEN
                 UPDATE SET
-                    {', '.join([f'{col} = src.{col}' for col in column_mappings])}
+                    {', '.join([f'{col} = src.{col}' for col in column_mappings])} {updated_ts}
             WHEN NOT MATCHED THEN
                 INSERT ({','.join(column_mappings)})
                 VALUES ({','.join([f'src.{x}' for x in column_mappings])});
