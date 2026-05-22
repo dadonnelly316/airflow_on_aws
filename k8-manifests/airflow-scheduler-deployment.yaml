@@ -43,8 +43,8 @@ spec:
         - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-secret-key
-              key: airflow-webserver-secret-key
+              name: airflow-api-server-secret-key
+              key: airflow-api-server-secret-key
         - name: AIRFLOW__CLI__ENDPOINT_URL
           valueFrom:
             configMapKeyRef:
