@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: airflow-webserver
+  name: airflow-api-server
   labels:
-    app: airflow-webserver
+    app: airflow-api-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: airflow-webserver
+      app: airflow-api-server
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: airflow-webserver
+        app: airflow-api-server
     spec:
       containers:
-      - name: airflow-webserver
+      - name: airflow-api-server
         command: ['build/webserver_entrypoint.sh']
         args: ['pod-template-file.yaml','__AIRFLOW_IMAGE__']
         image: __AIRFLOW_IMAGE__  # sed will edit this for easy configuration between AWS EKS and minikube
@@ -45,18 +45,18 @@ spec:
         - name: AIRFLOW_WEBSERVER_USERNAME
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-username
-              key: airflow-webserver-username
+              name: airflow-api-server-username
+              key: airflow-api-server-username
         - name: AIRFLOW_WEBSERVER_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-password
-              key: airflow-webserver-password
+              name: airflow-api-server-password
+              key: airflow-api-server-password
         - name: AIRFLOW_WEBSERVER_EMAIL
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-email
-              key: airflow-webserver-email
+              name: airflow-api-server-email
+              key: airflow-api-server-email
         - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
           valueFrom:
             secretKeyRef:
@@ -65,8 +65,8 @@ spec:
         - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-secret-key
-              key: airflow-webserver-secret-key
+              name: airflow-api-server-secret-key
+              key: airflow-api-server-secret-key
         - name: AIRFLOW__CLI__ENDPOINT_URL
           valueFrom:
             configMapKeyRef:

@@ -37,9 +37,9 @@ services:
       interval: 5s
       retries: 5
 
-  airflow-webserver:
+  airflow-api-server:
     <<: *airflow-base
-    container_name: airflow-webserver
+    container_name: airflow-api-server
     entrypoint: build/webserver_entrypoint.sh
     ports:
       - 80:80
