@@ -5,7 +5,7 @@ x-airflow-base: &airflow-base
     postgres:
       condition: service_healthy
   build:
-    dockerfile: debian.Dockerfile
+    dockerfile: Dockerfile
   environment:
     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:password@postgres:5432/postgres
     - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
@@ -16,8 +16,8 @@ x-airflow-base: &airflow-base
     - AIRFLOW__WEBSERVER__BASE_URL=http://localhost:80
     - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=80
     - AIRFLOW__CLI__API_CLIENT=http://localhost:80
-    - AIRFLOW_WEBSERVER_USERNAME=non-prod-testing
-    - AIRFLOW_WEBSERVER_PASSWORD=youshallpass
+    - AIRFLOW_WEBSERVER_USERNAME=test-account
+    - AIRFLOW_WEBSERVER_PASSWORD=test-password
 
 services:
   postgres:
@@ -40,7 +40,7 @@ services:
   airflow-api-server:
     <<: *airflow-base
     container_name: airflow-api-server
-    entrypoint: build/webserver_entrypoint.sh
+    entrypoint: build/entrypoint_api_server.sh
     ports:
       - 80:80
     healthcheck:
@@ -52,7 +52,12 @@ services:
   airflow-scheduler:
     <<: *airflow-base
     container_name: airflow-scheduler
-    entrypoint: build/scheduler_entrypoint.sh
+    entrypoint: build/entrypoint_scheduler.sh
+
+  airflow-dag-processor:
+    <<: *airflow-base
+    container_name: airflow-dag-processor
+    entrypoint: build/entrypoint_dag_processor.sh
  
 volumes: 
   host_machine_db:

@@ -11,7 +11,7 @@ bash ./build/airflow_db_check.sh $INPUT_MAX_RETRIES $INPUT_RETRY_DELAY
 # todo - handle failures of db check better. Check state of other pod useing kubectl, and possible kill other pod
 
 
-# Checking if migrations are complete (https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html#check-migrations)
+# https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html#check-migrations
 if [[ $RUN_DB_MIGRATION_BOOLEAN=='1' ]]; then
     sleep 30
     echo "$(date): Checking if migrations are complete."
@@ -34,4 +34,4 @@ if [[ $CREATE_WEBSERVER_USER_BOOLEAN==1 ]]; then
 fi
 
 # starting webserver (https://airflow.apache.org/docs/apache-airflow/2.9.0/start.html)
-airflow webserver --port 80
+airflow api-server --port 80
