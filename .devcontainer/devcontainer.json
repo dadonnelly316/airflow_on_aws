@@ -14,7 +14,7 @@
 	},
 	"build": {
         // Path is relative to the devcontainer.json file.
-        "dockerfile": "../debian.Dockerfile"
+        "dockerfile": "../Dockerfile"
     },
 	"postCreateCommand": "bash ./.devcontainer/postCreateScript.sh"
 

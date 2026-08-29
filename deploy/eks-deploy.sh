@@ -4,14 +4,14 @@ AIRFLOW_IMAGE=${1}
 
 cd "$(dirname "$0")"
 
-cp ./{../k8-manifests/airflow-scheduler-deployment.yaml,../k8-manifests/airflow-webserver-deployment.yaml} ../k8-manifests/_tmp
+cp ./{../k8-manifests/airflow-scheduler-deployment.yaml,../k8-manifests/airflow-api-server-deployment.yaml} ../k8-manifests/_tmp
 
 # We must set image pull policy to never (see tip 1 https://minikube.sigs.k8s.io/docs/handbook/pushing/)
-sed -i "" "s,__IMAGE_PULL_POLICY__,Always,g" ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
+sed -i "" "s,__IMAGE_PULL_POLICY__,Always,g" ../k8-manifests/_tmp/airflow-api-server-deployment.yaml
 sed -i "" "s/__IMAGE_PULL_POLICY__/Always/g" ../k8-manifests/_tmp/airflow-scheduler-deployment.yaml
 
 # find image in local docker repository
-sed -i "" "s,__AIRFLOW_IMAGE__,${AIRFLOW_IMAGE},g" ../k8-manifests/_tmp/airflow-webserver-deployment.yaml
+sed -i "" "s,__AIRFLOW_IMAGE__,${AIRFLOW_IMAGE},g" ../k8-manifests/_tmp/airflow-api-server-deployment.yaml
 sed -i "" "s,__AIRFLOW_IMAGE__,${AIRFLOW_IMAGE},g" ../k8-manifests/_tmp/airflow-scheduler-deployment.yaml
 
 kube_deploy() {
@@ -22,4 +22,4 @@ kube_deploy() {
 }
 
 kube_deploy "_tmp/airflow-scheduler-deployment.yaml"
-kube_deploy "_tmp/airflow-webserver-deployment.yaml"
+kube_deploy "_tmp/airflow-api-server-deployment.yaml"

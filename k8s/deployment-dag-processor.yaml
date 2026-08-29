@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: airflow-scheduler
+  name: airflow-dag-processor
   labels:
-    app: airflow-scheduler
+    app: airflow-dag-processor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: airflow-scheduler
+      app: airflow-dag-processor
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: airflow-scheduler
+        app: airflow-dag-processor
     spec:
       containers:
-      - name: airflow-scheduler
-        command: ['build/scheduler_entrypoint.sh','__AIRFLOW_IMAGE__']
+      - name: airflow-dag-processor
+        command: ['build/dag_processor_entrypoint.sh','__AIRFLOW_IMAGE__']
         args: ['pod-template-file.yaml']
         image: __AIRFLOW_IMAGE__ # sed will edit this for easy configuration between AWS EKS and minikube
         imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
@@ -43,8 +43,8 @@ spec:
         - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-secret-key
-              key: airflow-webserver-secret-key
+              name: airflow-api-server-secret-key
+              key: airflow-api-server-secret-key
         - name: AIRFLOW__CLI__ENDPOINT_URL
           valueFrom:
             configMapKeyRef:

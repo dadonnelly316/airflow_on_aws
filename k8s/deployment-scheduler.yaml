@@ -1,29 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: airflow-webserver
+  name: airflow-scheduler
   labels:
-    app: airflow-webserver
+    app: airflow-scheduler
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: airflow-webserver
+      app: airflow-scheduler
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: airflow-webserver
+        app: airflow-scheduler
     spec:
       containers:
-      - name: airflow-webserver
-        command: ['build/webserver_entrypoint.sh']
-        args: ['pod-template-file.yaml','__AIRFLOW_IMAGE__']
-        image: __AIRFLOW_IMAGE__  # sed will edit this for easy configuration between AWS EKS and minikube
+      - name: airflow-scheduler
+        command: ['build/scheduler_entrypoint.sh','__AIRFLOW_IMAGE__']
+        args: ['pod-template-file.yaml']
+        image: __AIRFLOW_IMAGE__ # sed will edit this for easy configuration between AWS EKS and minikube
         imagePullPolicy: __IMAGE_PULL_POLICY__  # sed will edit this for easy configuration between AWS EKS and minikube
-        ports:
-        - containerPort: 80
         env:
         - name: AIRFLOW__CORE__EXECUTOR
           value: KubernetesExecutor
@@ -37,26 +35,6 @@ spec:
             configMapKeyRef:
               name: airflow-config
               key: ingress_host
-        - name: CREATE_WEBSERVER_USER_BOOLEAN
-          valueFrom:
-            configMapKeyRef:
-              name: airflow-config
-              key: create_webserver_user_boolean
-        - name: AIRFLOW_WEBSERVER_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: airflow-webserver-username
-              key: airflow-webserver-username
-        - name: AIRFLOW_WEBSERVER_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: airflow-webserver-password
-              key: airflow-webserver-password
-        - name: AIRFLOW_WEBSERVER_EMAIL
-          valueFrom:
-            secretKeyRef:
-              name: airflow-webserver-email
-              key: airflow-webserver-email
         - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
           valueFrom:
             secretKeyRef:
@@ -65,8 +43,8 @@ spec:
         - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: airflow-webserver-secret-key
-              key: airflow-webserver-secret-key
+              name: airflow-api-server-secret-key
+              key: airflow-api-server-secret-key
         - name: AIRFLOW__CLI__ENDPOINT_URL
           valueFrom:
             configMapKeyRef:
@@ -85,5 +63,8 @@ spec:
 
 
 
- 
- 
+
+
+
+
+        

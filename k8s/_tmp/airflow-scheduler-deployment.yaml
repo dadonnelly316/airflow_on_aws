@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  labels:
+    app: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+      - name: airflow-scheduler
+        command: ['build/scheduler_entrypoint.sh','LOCALHOSTTEST/HI']
+        args: ['pod-template-file.yaml']
+        image: LOCALHOSTTEST/HI # sed will edit this for easy configuration between AWS EKS and minikube
+        imagePullPolicy: Always  # sed will edit this for easy configuration between AWS EKS and minikube
+        env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: KubernetesExecutor
+        - name: RUN_DB_MIGRATION_BOOLEAN
+          valueFrom:
+            configMapKeyRef:
+              name: airflow-config
+              key: run_db_migration_boolean
+        - name: AIRFLOW__WEBSERVER__BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: airflow-config
+              key: ingress_host
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: database-connection-string
+              key: database-connection-string
+        - name: AIRFLOW__WEBSERVER__SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-webserver-secret-key
+              key: airflow-webserver-secret-key
+        - name: AIRFLOW__CLI__ENDPOINT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: airflow-config
+              key: airflow_cli_endpoint_url
+        - name: AIRFLOW__WEBSERVER__WEB_SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: airflow-config
+              key: airflow_webserver_web_server_port
+        # - name: AIRFLOW__CORE__FERNET_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: airflow-fernet-key
+        #       key: airflow-fernet-key
+
+
+
+
+
+
+
+        

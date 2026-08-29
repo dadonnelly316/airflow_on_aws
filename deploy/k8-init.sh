@@ -21,6 +21,6 @@ kube_deploy "init-role.yaml"
 kube_deploy "init-service-account.yaml"
 kube_deploy "init-svc-role-binding.yaml" 
 
-kube_deploy "airflow-webserver-service.yaml"
-kube_deploy "airflow-webserver-ingress.yaml" 
+kube_deploy "airflow-api-server-service.yaml"
+kube_deploy "airflow-api-server-ingress.yaml" 
 kube_deploy "_tmp/airflow-config-map.yaml"

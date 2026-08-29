@@ -1,0 +1,7 @@
+# airflow providers
+apache-airflow-providers-postgres
+apache-airflow-providers-fab
+
+# other dependencies
+psycopg2
+boto3

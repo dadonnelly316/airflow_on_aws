@@ -7,7 +7,7 @@ docker build \
     --pull \
     --tag airflow \
     --platform linux/amd64 \
-    --file ../debian.Dockerfile \
+    --file ../Dockerfile \
     ../
 
 
